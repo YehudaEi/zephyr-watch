@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZephyrWatch Notification Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid #28a745;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #dc3545;
+            transition: background 0.3s;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #d39e00);
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,193,7,0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .preset-notifications {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .preset-btn {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .preset-btn .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .log-section {
+            background: #212529;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #495057;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .log-info {
+            color: #17a2b8;
+        }
+
+        .protocol-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .protocol-info h4 {
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+
+        .protocol-info code {
+            background: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .preset-notifications {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 ZephyrWatch</h1>
+            <p>Advanced Bluetooth LE Notification Tester</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Connection Status -->
+            <div class="status-section">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <h3 id="statusText">Disconnected</h3>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="connectToWatch()">🔗 Connect to Watch</button>
+                    <button class="btn btn-warning" onclick="disconnectWatch()" id="disconnectBtn" disabled>❌ Disconnect</button>
+                </div>
+            </div>
+
+            <!-- Custom Notification Form -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px;">📝 Custom Notification</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="appName">App Name:</label>
+                        <input type="text" id="appName" placeholder="e.g., WhatsApp, Gmail, Instagram" maxlength="31">
+                    </div>
+                    <div class="form-group">
+                        <label for="notificationType">Notification Type:</label>
+                        <select id="notificationType">
+                            <option value="0">📞 Call</option>
+                            <option value="1">💬 SMS</option>
+                            <option value="2">📧 Email</option>
+                            <option value="3">👥 Social</option>
+                            <option value="4">📅 Calendar</option>
+                            <option value="5" selected>🔔 Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">Title/Header:</label>
+                    <input type="text" id="title" placeholder="Notification title" maxlength="63">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message Body:</label>
+                    <textarea id="message" placeholder="Notification message content..." maxlength="255"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="sendCustomNotification()" id="sendBtn" disabled>
+                        🚀 Send Notification
+                    </button>
+                    <button class="btn btn-warning" onclick="clearAllNotifications()" id="clearBtn" disabled>
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preset Notifications -->
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px;">⚡ Quick Preset Notifications</h3>
+                <div class="preset-notifications">
+                    <div class="preset-btn" onclick="sendPresetNotification('call')">
+                        <div class="icon">📞</div>
+                        <div><strong>Incoming Call</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">Mom calling...</div>
+                    </div>
+                    <div class="preset-btn" onclick="sendPresetNotification('sms')">
+                        <div class="icon">💬</div>
+                        <div><strong>Text Message</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">Hey, how are you?</div>
+                    </div>
+                    <div class="preset-btn" onclick="sendPresetNotification('email')">
+                        <div class="icon">📧</div>
+                        <div><strong>Email</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">New email received</div>
+                    </div>
+                    <div class="preset-btn" onclick="sendPresetNotification('social')">
+                        <div class="icon">👥</div>
+                        <div><strong>Social Media</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">You have new likes!</div>
+                    </div>
+                    <div class="preset-btn" onclick="sendPresetNotification('calendar')">
+                        <div class="icon">📅</div>
+                        <div><strong>Calendar</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">Meeting in 15 min</div>
+                    </div>
+                    <div class="preset-btn" onclick="sendPresetNotification('weather')">
+                        <div class="icon">🌤️</div>
+                        <div><strong>Weather</strong></div>
+                        <div style="font-size: 0.9em; color: #6c757d;">Rain expected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocol Information -->
+            <div class="protocol-info">
+                <h4>📋 Protocol Information</h4>
+                <p><strong>Service UUID:</strong> <code>12345678-1234-1234-1234-123456789ABC</code></p>
+                <p><strong>Write Characteristic:</strong> <code>87654321-4321-4321-4321-CBA987654321</code></p>
+                <p><strong>Response Characteristic:</strong> <code>11111111-2222-3333-4444-555555555555</code></p>
+                <p><strong>Data Format:</strong> [CMD][TYPE][APP_LEN][TITLE_LEN][TEXT_LEN][APP_NAME][TITLE][TEXT]</p>
+            </div>
+
+            <!-- Log Section -->
+            <div class="log-section">
+                <h4 style="margin-bottom: 15px;">📊 Communication Log</h4>
+                <div id="logContainer">
+                    <div class="log-entry">
+                        <span class="log-time">[Ready]</span> 
+                        <span class="log-info">Web Bluetooth API initialized. Click "Connect to Watch" to begin.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let watchDevice = null;
+        let notificationChar = null;
+        let responseChar = null;
+        let isConnected = false;
+
+        // Service and characteristic UUIDs
+        const WATCH_SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
+        const NOTIFICATION_CHAR_UUID = '87654321-4321-4321-4321-cba987654321';
+        const RESPONSE_CHAR_UUID = '11111111-2222-3333-4444-555555555555';
+
+        // Notification commands and types
+        const CMD = {
+            ADD: 0x01,
+            REMOVE: 0x02,
+            CLEAR_ALL: 0x03,
+            ACTION: 0x04
+        };
+
+        const TYPE = {
+            CALL: 0x00,
+            SMS: 0x01,
+            EMAIL: 0x02,
+            SOCIAL: 0x03,
+            CALENDAR: 0x04,
+            OTHER: 0x05
+        };
+
+        // Preset notifications
+        const presetNotifications = {
+            call: {
+                app: 'Phone',
+                title: 'Incoming Call',
+                message: 'Mom is calling you...',
+                type: TYPE.CALL
+            },
+            sms: {
+                app: 'Messages',
+                title: 'New Message',
+                message: 'Hey! How are you doing today? 😊',
+                type: TYPE.SMS
+            },
+            email: {
+                app: 'Gmail',
+                title: 'Important Email',
+                message: 'Your package has been delivered to your doorstep.',
+                type: TYPE.EMAIL
+            },
+            social: {
+                app: 'Instagram',
+                title: 'New Likes',
+                message: 'Your photo got 25 new likes! 📸❤️',
+                type: TYPE.SOCIAL
+            },
+            calendar: {
+                app: 'Calendar',
+                title: 'Meeting Reminder',
+                message: 'Team standup meeting starts in 15 minutes',
+                type: TYPE.CALENDAR
+            },
+            weather: {
+                app: 'Weather',
+                title: 'Weather Alert',
+                message: 'Rain expected this afternoon. Bring an umbrella! ☔',
+                type: TYPE.OTHER
+            }
+        };
+
+        // Utility functions
+        function logMessage(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            let className = 'log-info';
+            if (type === 'success') className = 'log-success';
+            else if (type === 'error') className = 'log-error';
+            
+            logEntry.innerHTML = `
+                <span class="log-time">[${timestamp}]</span> 
+                <span class="${className}">${message}</span>
+            `;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected to ZephyrWatch';
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+                clearBtn.disabled = false;
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Disconnected';
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+                clearBtn.disabled = true;
+            }
+        }
+
+        function createNotificationPacket(cmd, type, appName, title, text) {
+            const encoder = new TextEncoder();
+            const appBytes = encoder.encode(appName.substring(0, 31));
+            const titleBytes = encoder.encode(title.substring(0, 63));
+            const textBytes = encoder.encode(text.substring(0, 255));
+            
+            const totalLength = 5 + appBytes.length + titleBytes.length + textBytes.length;
+            const packet = new Uint8Array(totalLength);
+            
+            let offset = 0;
+            packet[offset++] = cmd;
+            packet[offset++] = type;
+            packet[offset++] = appBytes.length;
+            packet[offset++] = titleBytes.length;
+            packet[offset++] = textBytes.length;
+            
+            packet.set(appBytes, offset);
+            offset += appBytes.length;
+            packet.set(titleBytes, offset);
+            offset += titleBytes.length;
+            packet.set(textBytes, offset);
+            
+            return packet;
+        }
+
+        // Main connection function
+        async function connectToWatch() {
+            if (!navigator.bluetooth) {
+                logMessage('Web Bluetooth API not supported in this browser!', 'error');
+                alert('This browser does not support Web Bluetooth. Please use Chrome, Edge, or Opera.');
+                return;
+            }
+
+            try {
+                logMessage('Scanning for ZephyrWatch...', 'info');
+                
+                watchDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ZephyrWatch' }],
+                    optionalServices: [WATCH_SERVICE_UUID]
+                });
+
+                logMessage(`Found device: ${watchDevice.name}`, 'success');
+                
+                // Add disconnect event listener
+                watchDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                logMessage('Connecting to GATT server...', 'info');
+                const server = await watchDevice.gatt.connect();
+                
+                logMessage('Discovering services...', 'info');
+                const service = await server.getPrimaryService(WATCH_SERVICE_UUID);
+                
+                logMessage('Getting notification characteristic...', 'info');
+                notificationChar = await service.getCharacteristic(NOTIFICATION_CHAR_UUID);
+                
+                try {
+                    logMessage('Getting response characteristic...', 'info');
+                    responseChar = await service.getCharacteristic(RESPONSE_CHAR_UUID);
+                    
+                    // Subscribe to response notifications
+                    await responseChar.startNotifications();
+                    responseChar.addEventListener('characteristicvaluechanged', handleResponse);
+                    logMessage('Subscribed to response notifications', 'success');
+                } catch (error) {
+                    logMessage('Response characteristic not available (optional)', 'info');
+                }
+                
+                updateConnectionStatus(true);
+                logMessage('✅ Successfully connected to ZephyrWatch!', 'success');
+                
+            } catch (error) {
+                logMessage(`Connection failed: ${error.message}`, 'error');
+                updateConnectionStatus(false);
+            }
+        }
+
+        function onDisconnected() {
+            logMessage('Watch disconnected', 'info');
+            updateConnectionStatus(false);
+            watchDevice = null;
+            notificationChar = null;
+            responseChar = null;
+        }
+
+        async function disconnectWatch() {
+            if (watchDevice && watchDevice.gatt.connected) {
+                try {
+                    await watchDevice.gatt.disconnect();
+                    logMessage('Disconnected from watch', 'info');
+                } catch (error) {
+                    logMessage(`Disconnect error: ${error.message}`, 'error');
+                }
+            }
+            updateConnectionStatus(false);
+        }
+
+        function handleResponse(event) {
+            const data = new Uint8Array(event.target.value.buffer);
+            if (data.length >= 2) {
+                const cmd = data[0];
+                const status = data[1];
+                const statusText = status === 0x01 ? 'ACK' : 'NACK';
+                logMessage(`Watch response: CMD=${cmd}, Status=${statusText}`, 'success');
+            }
+        }
+
+        // Send notification functions
+        async function sendCustomNotification() {
+            if (!isConnected) {
+                logMessage('Not connected to watch!', 'error');
+                return;
+            }
+
+            const appName = document.getElementById('appName').value.trim() || 'Custom App';
+            const title = document.getElementById('title').value.trim() || 'Custom Notification';
+            const message = document.getElementById('message').value.trim() || 'This is a test notification';
+            const type = parseInt(document.getElementById('notificationType').value);
+
+            await sendNotification(appName, title, message, type);
+        }
+
+        async function sendPresetNotification(presetName) {
+            if (!isConnected) {
+                logMessage('Not connected to watch!', 'error');
+                return;
+            }
+
+            const preset = presetNotifications[presetName];
+            if (!preset) {
+                logMessage(`Unknown preset: ${presetName}`, 'error');
+                return;
+            }
+
+            await sendNotification(preset.app, preset.title, preset.message, preset.type);
+        }
+
+        async function sendNotification(appName, title, message, type) {
+            try {
+                const packet = createNotificationPacket(CMD.ADD, type, appName, title, message);
+                
+                logMessage(`Sending: ${appName} - ${title}`, 'info');
+                await notificationChar.writeValue(packet);
+                
+                logMessage(`✅ Notification sent successfully!`, 'success');
+                logMessage(`   App: ${appName}`, 'info');
+                logMessage(`   Title: ${title}`, 'info');
+                logMessage(`   Message: ${message}`, 'info');
+                logMessage(`   Type: ${type}`, 'info');
+                logMessage(`   Packet size: ${packet.length} bytes`, 'info');
+                
+            } catch (error) {
+                logMessage(`Failed to send notification: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAllNotifications() {
+            if (!isConnected) {
+                logMessage('Not connected to watch!', 'error');
+                return;
+            }
+
+            try {
+                const packet = new Uint8Array([CMD.CLEAR_ALL, 0, 0, 0, 0]);
+                await notificationChar.writeValue(packet);
+                logMessage('✅ Clear all command sent', 'success');
+            } catch (error) {
+                logMessage(`Failed to clear notifications: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize form with sample data
+        window.onload = function() {
+            document.getElementById('appName').value = 'Test App';
+            document.getElementById('title').value = 'Hello ZephyrWatch!';
+            document.getElementById('message').value = 'This is a test notification from the web browser. 🚀';
+            
+            logMessage('Ready to connect to ZephyrWatch', 'info');
+            logMessage('Make sure your watch is advertising and nearby', 'info');
+        };
+    </script>
+</body>
+</html>

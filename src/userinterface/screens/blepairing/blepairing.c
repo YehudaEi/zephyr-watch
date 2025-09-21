@@ -6,34 +6,35 @@
  * @maintainer electricalgorithm @ github
  */
 
-#include <zephyr/logging/log.h>
-#include <string.h>
+#include "userinterface/screens/blepairing/blepairing.h"
 #include "lvgl.h"
 #include "userinterface/utils.h"
-#include "userinterface/screens/blepairing/blepairing.h"
+#include <string.h>
+#include <zephyr/logging/log.h>
 
 // Create a logger.
 LOG_MODULE_REGISTER(ZephyrWatch_UI_BLEPairing, LOG_LEVEL_INF);
 
 // Forward declarations for static functions
-static void render_title_label(lv_obj_t *flex_element);
-static void render_instruction_label(lv_obj_t *flex_element);
-static void render_pin_display(lv_obj_t *flex_element);
-static void render_footer_label(lv_obj_t *flex_element);
+static void render_title_label(lv_obj_t* flex_element);
+static void render_instruction_label(lv_obj_t* flex_element);
+static void render_pin_display(lv_obj_t* flex_element);
+static void render_footer_label(lv_obj_t* flex_element);
 
 // Holds the BLE pairing screen objects.
-lv_obj_t *blepairing_screen;
-lv_obj_t *previous_screen;
-static lv_obj_t *label_title;
-static lv_obj_t *label_instruction;
-static lv_obj_t *pin_container;
-static lv_obj_t *pin_digits[6];  // Array to hold individual PIN digit labels
-static lv_obj_t *label_footer;
+lv_obj_t* blepairing_screen;
+static lv_obj_t* previous_screen;
+static lv_obj_t* label_title;
+static lv_obj_t* label_instruction;
+static lv_obj_t* pin_container;
+static lv_obj_t* pin_digits[6]; // Array to hold individual PIN digit labels
+static lv_obj_t* label_footer;
 
 // Current PIN code (default for demonstration)
 static char current_pin[7] = "000000";
 
-void blepairing_screen_event(lv_event_t * event) {
+void blepairing_screen_event(lv_event_t* event)
+{
     lv_event_code_t event_code = lv_event_get_code(event);
 
     // Handle double click to return to home.
@@ -43,22 +44,23 @@ void blepairing_screen_event(lv_event_t * event) {
     }
 }
 
-void blepairing_screen_init() {
+void blepairing_screen_init()
+{
     LOG_DBG("Initializing BLE pairing screen");
 
     // Create the screen object which is the LV object with no parent.
     blepairing_screen = create_screen();
 
     // Create main vertical layout container
-    lv_obj_t *main_column = create_column(blepairing_screen, 100, 100);
+    lv_obj_t* main_column = create_column(blepairing_screen, 100, 100);
     lv_obj_set_style_pad_all(main_column, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_row(main_column, 3, LV_PART_MAIN);
 
     // Create rows for different sections
-    lv_obj_t *title_row = create_row(main_column, 100, 15);
-    lv_obj_t *instruction_row = create_row(main_column, 100, 15);
-    lv_obj_t *pin_row = create_row(main_column, 100, 40);
-    lv_obj_t *footer_row = create_row(main_column, 100, 15);
+    lv_obj_t* title_row = create_row(main_column, 100, 15);
+    lv_obj_t* instruction_row = create_row(main_column, 100, 15);
+    lv_obj_t* pin_row = create_row(main_column, 100, 40);
+    lv_obj_t* footer_row = create_row(main_column, 100, 15);
 
     // Render all components
     render_title_label(title_row);
@@ -71,7 +73,8 @@ void blepairing_screen_init() {
     LOG_DBG("BLE pairing screen initialized successfully.");
 }
 
-static void render_title_label(lv_obj_t *flex_element) {
+static void render_title_label(lv_obj_t* flex_element)
+{
     label_title = lv_label_create(flex_element);
     lv_label_set_text(label_title, "Pairing Request");
 
@@ -86,7 +89,8 @@ static void render_title_label(lv_obj_t *flex_element) {
     lv_obj_center(label_title);
 }
 
-static void render_instruction_label(lv_obj_t *flex_element) {
+static void render_instruction_label(lv_obj_t* flex_element)
+{
     label_instruction = lv_label_create(flex_element);
     lv_label_set_text(label_instruction, "Enter PIN on your device.");
 
@@ -101,7 +105,8 @@ static void render_instruction_label(lv_obj_t *flex_element) {
     lv_obj_set_style_text_color(label_instruction, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-static void render_pin_display(lv_obj_t *flex_element) {
+static void render_pin_display(lv_obj_t* flex_element)
+{
     // Create a container for the PIN digits with horizontal layout
     pin_container = lv_obj_create(flex_element);
     lv_obj_set_size(pin_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -117,11 +122,11 @@ static void render_pin_display(lv_obj_t *flex_element) {
     // Remove background and border from container
     lv_obj_set_style_bg_opa(pin_container, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_opa(pin_container, LV_OPA_TRANSP, LV_PART_MAIN);
-    
+
     // Create individual digit displays
     for (int i = 0; i < 6; i++) {
         // Create a container for each digit
-        lv_obj_t *digit_box = lv_obj_create(pin_container);
+        lv_obj_t* digit_box = lv_obj_create(pin_container);
         lv_obj_set_size(digit_box, 25, 45);
 
         // Style the digit box with rounded corners and shadow
@@ -146,7 +151,8 @@ static void render_pin_display(lv_obj_t *flex_element) {
     }
 }
 
-static void render_footer_label(lv_obj_t *flex_element) {
+static void render_footer_label(lv_obj_t* flex_element)
+{
     label_footer = lv_label_create(flex_element);
     lv_label_set_text(label_footer, "Double tap to cancel");
 
@@ -161,7 +167,8 @@ static void render_footer_label(lv_obj_t *flex_element) {
     lv_obj_set_style_text_color(label_footer, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-uint8_t blepairing_screen_set_pin(const char *pin_code) {
+uint8_t blepairing_screen_set_pin(const char* pin_code)
+{
     // Validate input
     if (pin_code == NULL || strlen(pin_code) != 6) {
         LOG_ERR("Invalid PIN code provided");
@@ -188,7 +195,8 @@ uint8_t blepairing_screen_set_pin(const char *pin_code) {
     return 0;
 }
 
-void blepairing_screen_load() {
+void blepairing_screen_load()
+{
     // Save the previous screen to unload afterwards.
     previous_screen = lv_scr_act();
     if (!lv_obj_is_valid(blepairing_screen)) {
@@ -198,7 +206,8 @@ void blepairing_screen_load() {
     lv_screen_load_anim(blepairing_screen, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
 }
 
-void blepairing_screen_unload() {
+void blepairing_screen_unload()
+{
     // Load the previous screen.
     lv_screen_load_anim(previous_screen, LV_SCR_LOAD_ANIM_FADE_OUT, 300, 0, true);
 }

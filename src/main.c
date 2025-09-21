@@ -1,5 +1,6 @@
 /** Main application entry point for Zephyr-based smartwatch firmware.
  * Initializes display, Bluetooth, timers, and manages the core watch functionality including time tracking and UI updates.
+ * Now includes notification testing functionality and proper BLE initialization.
  *
  * @license GNU v3
  * @maintainer electricalgorithm @ github
@@ -10,12 +11,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#include "watchdog/watchdog.h"
-#include "display/display.h"
-#include "devicetwin/devicetwin.h"
-#include "userinterface/userinterface.h"
-#include "datetime/datetime.h"
 #include "bluetooth/infrastructure.h"
+#include "bluetooth/services/notifications.h"
+#include "datetime/datetime.h"
+#include "devicetwin/devicetwin.h"
+#include "display/display.h"
+#include "userinterface/userinterface.h"
+#include "watchdog/watchdog.h"
 
 // Define the logger.
 LOG_MODULE_REGISTER(ZephyrWatch, LOG_LEVEL_INF);
@@ -26,7 +28,16 @@ LOG_MODULE_REGISTER(ZephyrWatch, LOG_LEVEL_INF);
 // Setting for device's time zone.
 int8_t utc_zone = +2;
 
-int main(void) {
+/* ADD FUNCTION DECLARATION HERE */
+int bluetooth_infrastructure_init(void);
+
+static void notification_received_callback(const notification_t* notif)
+{
+    LOG_INF("New notification: %s from %s", notif->title, notif->app_name);
+}
+
+int main(void)
+{
     int ret;
 
     // Set-up watchdog before all the subsystems.
@@ -36,6 +47,14 @@ int main(void) {
         return ret;
     }
     LOG_INF("Watchdog system is enabled.");
+
+    /* ADD BLE INFRASTRUCTURE INIT HERE - Initialize BLE mutex early */
+    ret = bluetooth_infrastructure_init();
+    if (ret) {
+        LOG_ERR("Bluetooth infrastructure couldn't be initialized. (RET: %d)", ret);
+        return ret;
+    }
+    LOG_INF("Bluetooth infrastructure initialized.");
 
     // Create the device twin.
     device_twin_t* device_twin = create_device_twin_instance(0, utc_zone);
@@ -59,7 +78,7 @@ int main(void) {
 
     // Refresh the UI.
     user_interface_task_handler();
-    LOG_INF("User interface is refreshed initally.");
+    LOG_INF("User interface is refreshed initially.");
 
     // Enable datetime subsystem.
     ret = enable_datetime_subsystem();
@@ -78,6 +97,22 @@ int main(void) {
         return ret;
     }
     LOG_INF("Bluetooth subsystem is enabled.");
+
+    // Init notification service
+    ret = notifications_init();
+    if (ret) {
+        LOG_ERR("Notifications service couldn't be initialized. (RET: %d)", ret);
+        return ret;
+    }
+
+    ret = notifications_start();
+    if (ret) {
+        LOG_ERR("Notifications service couldn't be started. (RET: %d)", ret);
+        return ret;
+    }
+
+    notifications_set_callback(notification_received_callback);
+    LOG_INF("Notification service is enabled.");
 
     while (1) {
         user_interface_task_handler();

@@ -49,6 +49,9 @@ To see the logs with USB-UART interface, one can use `west`'s super functionalit
 $ west espressif monitor
 ```
 
+## Notification Testings
+Open SendNotification.html in your phone (or use this link https://yehudae.net/ZephyrNotification.html) to test notifications in your watch.
+
 ## Contributing
 Feel free to send your patches, I'll be honoured to merge them to enhance the experience of this smart-watch!
 

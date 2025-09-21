@@ -26,6 +26,8 @@ lv_obj_t* settings_screen;
 static lv_obj_t* slider_brightness;
 static lv_obj_t* enable_ble;
 
+extern bool is_bluetooth_services_active(void);
+
 /* SETTINGS_SCREEN_EVENT
  * Event handler for menu screen gestures. It is used to detect non-list events.
  */
@@ -67,23 +69,107 @@ void ble_checkbox_event(lv_event_t* event)
         bool checked = lv_obj_has_state(checkbox, LV_STATE_CHECKED);
 
         if (checked) {
-            // Enable Bluetooth
+            /* ENABLING BLUETOOTH SERVICES */
+
+            // Show feedback message
+            lv_obj_t* status_label = lv_label_create(lv_scr_act());
+            lv_label_set_text(status_label, "Enabling BLE...");
+            lv_obj_align(status_label, LV_ALIGN_CENTER, 0, 50);
+            lv_obj_set_style_text_color(status_label, lv_color_hex(0x00FF00), 0);
+            lv_obj_set_style_text_font(status_label, &lv_font_montserrat_12, 0);
+
+            // Process UI updates to show the message
+            lv_task_handler();
+
+            // Enable Bluetooth services
             ret = enable_bluetooth_subsystem();
             if (ret != 0) {
-                LOG_ERR("Failed to enable bluethooth (err %d)", ret);
+                LOG_ERR("Failed to enable bluetooth services (err %d)", ret);
+
+                // Update status message to show error
+                lv_label_set_text(status_label, "BLE Enable Failed!");
+                lv_obj_set_style_text_color(status_label, lv_color_hex(0xFF0000), 0);
+
+                // Uncheck the checkbox
                 lv_obj_remove_state(checkbox, LV_STATE_CHECKED);
+
+                // Keep error message visible for 2 seconds
+                lv_task_handler();
+                k_sleep(K_MSEC(2000));
             } else {
-                LOG_INF("Bluetooth enabled.");
+                LOG_INF("Bluetooth services enabled.");
+
+                // Update status message to show success
+                lv_label_set_text(status_label, "BLE Enabled!");
+                lv_obj_set_style_text_color(status_label, lv_color_hex(0x00FF00), 0);
+
+                // Keep success message visible for 1 second
+                lv_task_handler();
+                k_sleep(K_MSEC(1000));
             }
+
+            // Remove the status message
+            lv_obj_del(status_label);
+
         } else {
-            // Disable Bluetooth
+            /* DISABLING BLUETOOTH SERVICES */
+
+            // Show feedback message
+            lv_obj_t* status_label = lv_label_create(lv_scr_act());
+            lv_label_set_text(status_label, "Disabling BLE...");
+            lv_obj_align(status_label, LV_ALIGN_CENTER, 0, 50);
+            lv_obj_set_style_text_color(status_label, lv_color_hex(0xFFAA00), 0);
+            lv_obj_set_style_text_font(status_label, &lv_font_montserrat_12, 0);
+
+            // Process UI updates to show the message
+            lv_task_handler();
+
+            // Small delay to show the message
+            k_sleep(K_MSEC(200));
+
+            // Disable Bluetooth services (this should be fast now)
             ret = disable_bluetooth_subsystem();
             if (ret != 0) {
-                LOG_ERR("Failed to disable bluethooth (err %d)", ret);
+                LOG_ERR("Failed to disable bluetooth services (err %d)", ret);
+
+                // Update status message to show error
+                lv_label_set_text(status_label, "BLE Disable Failed!");
+                lv_obj_set_style_text_color(status_label, lv_color_hex(0xFF0000), 0);
+
+                // Re-check the checkbox since disable failed
                 lv_obj_add_state(checkbox, LV_STATE_CHECKED);
+
+                // Keep error message visible for 2 seconds
+                lv_task_handler();
+                k_sleep(K_MSEC(2000));
             } else {
-                LOG_INF("Bluetooth disabled.");
+                LOG_INF("Bluetooth services disabled.");
+
+                // Update status message to show success
+                lv_label_set_text(status_label, "BLE Disabled!");
+                lv_obj_set_style_text_color(status_label, lv_color_hex(0x888888), 0);
+
+                // Keep success message visible for 1 second
+                lv_task_handler();
+                k_sleep(K_MSEC(500));
             }
+
+            // Remove the status message
+            lv_obj_del(status_label);
+        }
+
+        // Final UI refresh
+        lv_task_handler();
+    }
+}
+
+void settings_screen_refresh_ble_state(void)
+{
+    if (enable_ble && lv_obj_is_valid(enable_ble)) {
+        if (is_bluetooth_services_active()) {
+            lv_obj_add_state(enable_ble, LV_STATE_CHECKED);
+        } else {
+            lv_obj_remove_state(enable_ble, LV_STATE_CHECKED);
         }
     }
 }
@@ -133,5 +219,7 @@ void settings_screen_init()
     lv_obj_add_event_cb(title_row, settings_screen_event, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(slider_brightness, brightness_slider_event, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(enable_ble, ble_checkbox_event, LV_EVENT_VALUE_CHANGED, NULL);
+
+    settings_screen_refresh_ble_state();
     LOG_DBG("Settings screen initialized successfully.");
 }
